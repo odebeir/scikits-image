@@ -28,37 +28,14 @@ cimport numpy as np
 
 from _crank16_bilateral cimport kernel_mean,kernel_pop
 from skimage.filter.rank._core16 cimport _core16
+from skimage.filter.rank import _crank16_bilateral
 
 from skimage.filter.rank.generic import find_bitdepth
 
 __all__ = ['bilateral_mean', 'bilateral_pop']
 
 
-#def _apply(func8, func16, image, selem, out, mask, shift_x, shift_y, s0, s1):
-#    selem = img_as_ubyte(selem)
-#    if mask is not None:
-#        mask = img_as_ubyte(mask)
-#    if image.dtype == np.uint8:
-#        image = image.astype(np.uint16)
-#    elif image.dtype == np.uint16:
-#        pass
-#    else:
-#        raise TypeError("only uint8 and uint16 image supported!")
-#    bitdepth = find_bitdepth(image)
-#    if bitdepth > 11:
-#        raise ValueError("only uint16 <4096 image (12bit) supported!")
-#    return func16(
-#        image, selem, shift_x=shift_x, shift_y=shift_y, mask=mask, bitdepth=bitdepth + 1, out=out,
-#        s0=s0, s1=s1)
-
-def _applyk(np.uint16_t kernel(Py_ssize_t * , float, np.uint16_t, Py_ssize_t, Py_ssize_t, Py_ssize_t, float, float, Py_ssize_t, Py_ssize_t),
-np.ndarray[np.uint16_t, ndim=2] image,
-np.ndarray[np.uint8_t, ndim=2] selem,
-np.ndarray[np.uint8_t, ndim=2] mask,
-np.ndarray[np.uint16_t, ndim=2] out,
-char shift_x, char shift_y, Py_ssize_t bitdepth,
-float p0, float p1, Py_ssize_t s0, Py_ssize_t s1):
-
+def _apply(func8, func16, image, selem, out, mask, shift_x, shift_y, s0, s1):
     selem = img_as_ubyte(selem)
     if mask is not None:
         mask = img_as_ubyte(mask)
@@ -71,10 +48,34 @@ float p0, float p1, Py_ssize_t s0, Py_ssize_t s1):
     bitdepth = find_bitdepth(image)
     if bitdepth > 11:
         raise ValueError("only uint16 <4096 image (12bit) supported!")
-    return _core16(kernel, image, selem, mask, out, shift_x, shift_y, bitdepth, 0., 0., s0, s1)
+    return func16(
+        image, selem, shift_x=shift_x, shift_y=shift_y, mask=mask, bitdepth=bitdepth + 1, out=out,
+        s0=s0, s1=s1)
+
+#def _applyk(np.uint16_t kernel(Py_ssize_t * , float, np.uint16_t, Py_ssize_t, Py_ssize_t, Py_ssize_t, float, float, Py_ssize_t, Py_ssize_t),
+#np.ndarray[np.uint16_t, ndim=2] image,
+#np.ndarray[np.uint8_t, ndim=2] selem,
+#np.ndarray[np.uint8_t, ndim=2] mask,
+#np.ndarray[np.uint16_t, ndim=2] out,
+#char shift_x, char shift_y, Py_ssize_t bitdepth,
+#float p0, float p1, Py_ssize_t s0, Py_ssize_t s1):
+#
+#    selem = img_as_ubyte(selem)
+#    if mask is not None:
+#        mask = img_as_ubyte(mask)
+#    if image.dtype == np.uint8:
+#        image = image.astype(np.uint16)
+#    elif image.dtype == np.uint16:
+#        pass
+#    else:
+#        raise TypeError("only uint8 and uint16 image supported!")
+#    bitdepth = find_bitdepth(image)
+#    if bitdepth > 11:
+#        raise ValueError("only uint16 <4096 image (12bit) supported!")
+#    return _core16(kernel, image, selem, mask, out, shift_x, shift_y, bitdepth, 0., 0., s0, s1)
 
 
-cdef bilateral_mean(image, selem, out=None, mask=None, shift_x=False, shift_y=False, s0=10, s1=10):
+def bilateral_mean(image, selem, out=None, mask=None, shift_x=False, shift_y=False, s0=10, s1=10):
     """Return greyscale local bilateral_mean of an image.
 
     bilateral mean is computed on the given structuring element. Only levels between [g-s0,g+s1] ,are used.
@@ -134,11 +135,13 @@ cdef bilateral_mean(image, selem, out=None, mask=None, shift_x=False, shift_y=Fa
 
     """
 
-    return _applyk(kernel_mean, image, selem, out=out, mask=mask, shift_x=shift_x, shift_y=shift_y,
+#    return _applyk(kernel_mean, image, selem, out=out, mask=mask, shift_x=shift_x, shift_y=shift_y,
+#        s0=s0, s1=s1)
+    return _apply(None,_crank16_bilateral.mean, image, selem, out=out, mask=mask, shift_x=shift_x, shift_y=shift_y,
         s0=s0, s1=s1)
 
 
-cdef bilateral_pop(image, selem, out=None, mask=None, shift_x=False, shift_y=False, s0=10, s1=10):
+def bilateral_pop(image, selem, out=None, mask=None, shift_x=False, shift_y=False, s0=10, s1=10):
     """Return greyscale local bilateral_pop of an image.
 
     bilateral pop is computed on the given structuring element. Only levels between [g-s0,g+s1] ,are used.
@@ -198,6 +201,7 @@ cdef bilateral_pop(image, selem, out=None, mask=None, shift_x=False, shift_y=Fal
 
     """
 
-    return _applyk(kernel_pop, image, selem, out=out, mask=mask, shift_x=shift_x, shift_y=shift_y,
+#    return _applyk(kernel_pop, image, selem, out=out, mask=mask, shift_x=shift_x, shift_y=shift_y,
+#        s0=s0, s1=s1)
+    return _apply(None,_crank16_bilateral.pop, image, selem, out=out, mask=mask, shift_x=shift_x, shift_y=shift_y,
         s0=s0, s1=s1)
-
