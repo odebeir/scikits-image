@@ -24,10 +24,11 @@ result image is 16 bit with respect to the input image
 from skimage import img_as_ubyte
 
 import numpy as np
-from skimage.filter.rank import _crank16_bilateral
+
+from _crank16_bilateral cimport kernel_mean,kernel_pop
+from skimage.filter.rank._core16 cimport _core16
 
 from skimage.filter.rank.generic import find_bitdepth
-
 
 __all__ = ['bilateral_mean', 'bilateral_pop']
 
