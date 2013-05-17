@@ -39,8 +39,6 @@ def compute_scores(img):
 
     m,n = img.shape
 
-    img = img
-
     d = np.dstack((img[:,1:-1],img[:,0:-2],img[:,2:]))
     direction = np.argmax(d,axis=2)
     direction = np.hstack((np.zeros((m,1)),direction,np.zeros((m,1))))
@@ -56,6 +54,7 @@ def compute_scores(img):
         scores[i,id2] = scores[i-1,np.roll(id2,+1)] + img[i,id2]
 
     return (scores,direction)
+
 
 def backtrack(scores,best_id):
     """backtrack from each pixel of the bottom line
@@ -102,11 +101,14 @@ def test_seams():
     im[10:25, 10:25] = 1.
 
     scores,direction = compute_scores(im)
-    path = backtrack(scores,direction)
     ax1 = plt.subplot(1,2,1)
     plt.imshow(im,interpolation='nearest')
     ax2 = plt.subplot(1,2,2)
-    plt.imshow(scores,interpolation='nearest')
+    plt.imshow(direction,interpolation='nearest')
+
+    plt.show()
+
+    path = backtrack(scores,direction)
 
     #compute best path
     idx = np.argsort(scores[-1,:])
@@ -152,21 +154,21 @@ def test_resize():
     gr = gradient(im,disk(3))
     orig = im.copy()
 
-    for iter in range(10):
+    for iter in range(50):
 
         (scores,direction) = compute_scores(-gr)
         path_X,path_y = backtrack(scores,direction)
         idx = np.argsort(scores[-1,:])
-        
+
         x = path_X[:,idx[-1]]
         im = remove_seam(im,x)
         gr = remove_seam(gr,x)
         print iter
 
     ax1 = plt.subplot(1,2,1)
-    plt.imshow(orig,interpolation='nearest')
+    plt.imshow(orig,interpolation='nearest',cmap=plt.cm.gray)
     ax2 = plt.subplot(1,2,2)
-    plt.imshow(im,interpolation='nearest')
+    plt.imshow(im,interpolation='nearest',cmap=plt.cm.gray)
 
     plt.show()
 
