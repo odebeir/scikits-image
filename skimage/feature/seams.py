@@ -157,6 +157,7 @@ def test_resize():
         (scores,direction) = compute_scores(-gr)
         path_X,path_y = backtrack(scores,direction)
         idx = np.argsort(scores[-1,:])
+        
         x = path_X[:,idx[-1]]
         im = remove_seam(im,x)
         gr = remove_seam(gr,x)
