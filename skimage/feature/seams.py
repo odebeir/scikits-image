@@ -56,14 +56,20 @@ def compute_scores(img):
     return (scores,direction)
 
 
-def backtrack(scores,best_id):
+def backtrack(scores,best_id,x = None):
     """backtrack from each pixel of the bottom line
         returns path array
 
     Parameters
     ----------
-    image : ndarray
-        Input image.
+    scores : ndarray
+        score image
+
+    best_id: ndarray
+        direction of the best path
+
+    x : Integer
+        row of the starting point if None, compute path for every starting location
 
     Returns
     -------
@@ -72,21 +78,35 @@ def backtrack(scores,best_id):
     path_y : array
         corresponding y coordinate (same for each path, i.e. arange(0,np.image.shape[0]) )
     """
-
     m,n = scores.shape
-    path_X = np.zeros((m,n))
-    path_X[-1,:] = np.arange(n)
-    path_y = np.arange(0,path_X.shape[0])
-    for i in range(m-2,-1,-1):
-        id0 = best_id[i+1,np.ix_(path_X[i+1,:])]==0
-        id1 = best_id[i+1,np.ix_(path_X[i+1,:])]==1
-        id2 = best_id[i+1,np.ix_(path_X[i+1,:])]==2
+    path_y = np.arange(0,n)
 
-        path_X[i,id0.flatten()] = path_X[i+1,id0.flatten()]
-        path_X[i,id1.flatten()] = path_X[i+1,id1.flatten()]-1
-        path_X[i,id2.flatten()] = path_X[i+1,id2.flatten()]+1
+    if x is None:
+        path_X = np.zeros((m,n))
+        path_X[-1,:] = np.arange(n)
+        for i in range(m-2,-1,-1):
+            id0 = best_id[i+1,np.ix_(path_X[i+1,:])]==0
+            id1 = best_id[i+1,np.ix_(path_X[i+1,:])]==1
+            id2 = best_id[i+1,np.ix_(path_X[i+1,:])]==2
 
-    return (path_X,path_y)
+            path_X[i,id0.flatten()] = path_X[i+1,id0.flatten()]
+            path_X[i,id1.flatten()] = path_X[i+1,id1.flatten()]-1
+            path_X[i,id2.flatten()] = path_X[i+1,id2.flatten()]+1
+
+        return (path_X,path_y)
+    else:
+        path_x = np.arange(0,n)
+        path_x[-1] = x
+        for i in range(m-2,-1,-1):
+            id = best_id[i+1,path_x[i+1]]
+            if id == 0:
+                path_x[i] = path_x[i+1]
+            if id == 1:
+                path_x[i] = path_x[i+1]-1
+            if id == 2:
+                path_x[i] = path_x[i+1]+1
+
+        return (path_x,path_y)
 
 def remove_seam(im,path_x):
     r = np.zeros_like(im)[:,:-1]
@@ -154,15 +174,15 @@ def test_resize():
     gr = gradient(im,disk(3))
     orig = im.copy()
 
-    for iter in range(50):
+    for iter in range(100):
 
         (scores,direction) = compute_scores(-gr)
-        path_X,path_y = backtrack(scores,direction)
         idx = np.argsort(scores[-1,:])
 
-        x = path_X[:,idx[-1]]
-        im = remove_seam(im,x)
-        gr = remove_seam(gr,x)
+        path_x,path_y = backtrack(scores,direction,x=idx[-1])
+
+        im = remove_seam(im,path_x)
+        gr = remove_seam(gr,path_x)
         print iter
 
     ax1 = plt.subplot(1,2,1)
@@ -180,4 +200,9 @@ if __name__ == '__main__':
 
     # test_fascicule()
     # test_seams()
-    test_resize()
+    import cProfile
+
+    cProfile.run('test_resize()','restats')
+    import pstats
+    p = pstats.Stats('restats')
+    p.sort_stats('cumulative').print_stats(10)
