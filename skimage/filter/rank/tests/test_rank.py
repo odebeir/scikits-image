@@ -1,6 +1,5 @@
 import numpy as np
 from numpy.testing import run_module_suite, assert_array_equal, assert_raises
-
 from skimage import data
 from skimage.morphology import cmorph, disk
 from skimage.filter import rank
@@ -298,7 +297,8 @@ def test_smallest_selem16():
 
 
 def test_empty_selem():
-    # check that min, max and mean returns zeros if structuring element is empty
+    # check that min, max and mean returns zeros if structuring element is
+    # empty
 
     image = np.zeros((5, 5), dtype=np.uint16)
     out = np.zeros_like(image)
@@ -395,17 +395,46 @@ def test_selem_dtypes():
                              shift_x=0, shift_y=0)
         assert_array_equal(image, out)
 
+
 def test_percentile():
-
-    import skimage.color as color
-
-    lena = np.array(256*color.rgb2gray(data.lena()),dtype=np.uint8)
+    #check that both 8- and 16-bit versions return the same image
+    img = data.camera()
+    img16 = img.astype(np.uint16)
     selem = disk(15)
-    lena5_8bit = rank.percentile(lena,selem=selem,p0=0.05)
-    lena5_16bit = rank.percentile(lena.astype(np.uint16),selem=selem,p0=0.05)
-    assert(lena5_8bit.sum()<lena.sum())
-    assert_array_equal(lena5_8bit, lena5_16bit)
+    perc = rank.percentile(img, selem=selem, p0=0.05)
+    perc16 = rank.percentile(img16, selem=selem, p0=0.05)
+    assert(perc.sum() < img.sum())
+    assert_array_equal(perc, perc16)
 
+
+def test_percentile_min():
+    #check that percentile p0 = 0 is identical to local min
+    img = data.camera()
+    img16 = img.astype(np.uint16)
+    selem = disk(15)
+    #check for 8bit
+    img_p0 = rank.percentile(img,selem=selem,p0=0)
+    img_min = rank.minimum(img,selem=selem)
+    img_min = rank.minimum(img,selem=selem)
+    assert_array_equal(img_p0,img_min)
+    #check for 16bit
+    img_p0 = rank.percentile(img16,selem=selem,p0=0)
+    img_min = rank.minimum(img16,selem=selem)
+    assert_array_equal(img_p0,img_min)
+
+def test_percentile_max():
+    #check that percentile p0 = 0 is identical to local max
+    img = data.camera()
+    img16 = img.astype(np.uint16)
+    selem = disk(15)
+    #check for 8bit
+    img_p0 = rank.percentile(img,selem=selem,p0=1.)
+    img_max = rank.maximum(img,selem=selem)
+    assert_array_equal(img_p0,img_max)
+    #check for 16bit
+    img_p0 = rank.percentile(img16,selem=selem,p0=1.)
+    img_max = rank.maximum(img16,selem=selem)
+    assert_array_equal(img_p0,img_max)
 
 if __name__ == "__main__":
     run_module_suite()
