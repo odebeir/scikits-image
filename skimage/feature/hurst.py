@@ -63,19 +63,47 @@ def rings(w,n):
     y = np.arange(-w, w+1, 1)
     xv, yv = np.meshgrid(x, y)
     z = np.sqrt(xv**2+yv**2)
-    r = np.linspace(0,w,n,endpoint=True)
-    delta = r[1]
-    print r
+    r = np.linspace(0,w,n,endpoint=True)[1:]
+    delta = r[0]
     elem = []
-    for r1 in r[1:]:
+    for r1 in r:
         print r1
         elem.append(np.logical_and(z>=r1-delta,z<=r1))
-    return elem
+    return (r,elem)
 
-r = rings(10,4)
-d = data.camera()
+def filter(ima):
+    x,elem = rings(50,5)
+    n = x.shape[0]
+    Y = np.ones((ima.shape[0],ima.shape[1],n))
+    for i,e in enumerate(elem):
+        f = rank.mean(d,e)
+        Y[:,:,i] = np.log(f)
 
-for e in r:
-    f = rank.mean(d,e)
-    plt.imshow(f,interpolation='nearest')
+    # line fitting cf. http://www.johndcook.com/blog/2008/10/20/comparing-two-ways-to-fit-a-line-to-data/
+    n = x.shape[0]
+    sx = x.sum()
+    sy = Y.sum(axis=2)
+
+    stt = np.zeros(ima.shape)
+    sts = np.zeros(ima.shape)
+
+    for i in range(n):
+        print i
+        t = x[i] - sx/n
+        stt += t*t
+        sts += t*Y[:,:,i]
+
+    slope = sts/stt
+    intercept = (sy - sx*slope)/n
+
+    plt.figure()
+    plt.imshow(slope)
+    plt.colorbar()
+    for i in range(Y.shape[2]):
+        ima = Y[:,:,i]
+        plt.figure()
+        plt.imshow(ima,interpolation='nearest')
     plt.show()
+
+d = plt.imread('ims_broadatz.jpg')
+filter(d)
