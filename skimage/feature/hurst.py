@@ -55,6 +55,7 @@ def hurst_exponent(image):
     return H
 
 import matplotlib.pyplot as plt
+from skimage.morphology import disk
 from skimage import data
 
 def rings(w,n):
@@ -72,11 +73,15 @@ def rings(w,n):
     return (r,elem)
 
 def filter(ima):
-    x,elem = rings(100,5)
+    x,elem = rings(30,7)
+    plt.figure()
+    plt.imshow(np.sum(elem*x[:,np.newaxis,np.newaxis],0),interpolation='nearest')
+    x = np.log(x)
     n = x.shape[0]
     Y = np.ones((ima.shape[0],ima.shape[1],n))
     for i,e in enumerate(elem):
         f = rank.percentile_gradient(d,e,p0=.1,p1=.9)
+        # f = rank.gradient(d,e)
         Y[:,:,i] = np.log(f)
 
     # line fitting cf. http://www.johndcook.com/blog/2008/10/20/comparing-two-ways-to-fit-a-line-to-data/
@@ -103,7 +108,15 @@ def filter(ima):
         ima = Y[:,:,i]
         plt.figure()
         plt.imshow(ima,interpolation='nearest')
-    plt.show()
+    plt.figure()
+    for i in range(10):
+        plt.plot(x,Y[10*i,10*i,:])
+        plt.text(x[0],Y[10*i,10*i,0],'%.2f'%slope[10*i,10*i])
+    return slope
+
 d = data.camera()
 #d = plt.imread('ims_broadatz.jpg')
-filter(d)
+f = filter(d)
+plt.figure()
+plt.imshow(d,cmap=plt.cm.gray)
+plt.show()
