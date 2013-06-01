@@ -68,15 +68,15 @@ def rings(w,n):
     elem = []
     for r1 in r:
         print r1
-        elem.append(np.logical_and(z>=r1-delta,z<=r1))
+        elem.append((np.logical_and(z>=r1-delta,z<=r1)).astype(np.uint8))
     return (r,elem)
 
 def filter(ima):
-    x,elem = rings(50,5)
+    x,elem = rings(100,5)
     n = x.shape[0]
     Y = np.ones((ima.shape[0],ima.shape[1],n))
     for i,e in enumerate(elem):
-        f = rank.mean(d,e)
+        f = rank.percentile_gradient(d,e,p0=.1,p1=.9)
         Y[:,:,i] = np.log(f)
 
     # line fitting cf. http://www.johndcook.com/blog/2008/10/20/comparing-two-ways-to-fit-a-line-to-data/
@@ -104,6 +104,6 @@ def filter(ima):
         plt.figure()
         plt.imshow(ima,interpolation='nearest')
     plt.show()
-
-d = plt.imread('ims_broadatz.jpg')
+d = data.camera()
+#d = plt.imread('ims_broadatz.jpg')
 filter(d)
