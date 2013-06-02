@@ -73,7 +73,7 @@ def rings(w,n):
     return (r,elem)
 
 def filter(ima):
-    x,elem = rings(30,7)
+    x,elem = rings(10,7)
     plt.figure()
     plt.imshow(np.sum(elem*x[:,np.newaxis,np.newaxis],0),interpolation='nearest')
     x = np.log(x)
